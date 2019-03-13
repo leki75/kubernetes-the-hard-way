@@ -1,0 +1,10 @@
+ca_rsa_keysize: 2048
+ca_ca_expiry: "8760h"
+ca_cert_expiry: "8760h"
+
+ca_cn: Kubernetes
+ca_country: HU
+ca_locality: Budapest
+ca_organization: Kubernetes
+ca_organizational_unit: "Kubernetes The Hard Way"
+ca_state: Pest

@@ -1,0 +1,16 @@
+{
+  "CN": "{{ item.item.cn | default(ca_cn) }}",
+  "key": {
+    "algo": "rsa",
+    "size": {{ ca_rsa_keysize }}
+  },
+  "names": [
+    {
+      "C": "{{ ca_country }}",
+      "L": "{{ ca_locality }}",
+      "O": "{{ item.item.o | default(ca_organization) }}",
+      "OU": "{{ ca_organizational_unit }}",
+      "ST": "{{ ca_state }}"
+    }
+  ]
+}

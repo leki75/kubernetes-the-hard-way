@@ -1,0 +1,96 @@
+- name: "Create certs/ directory"
+  file:
+    path: certs
+    state: directory
+  delegate_to: localhost
+  run_once: true
+
+# TODO: download CA certificates from master nodes
+
+- name: "Create configuration for signing"
+  template:
+    src: "ca-config.json.j2"
+    dest: "certs/ca-config.json"
+  delegate_to: localhost
+  run_once: true
+
+- name: "Check CA key and certificate"
+  stat:
+    path: "certs/{{ item }}"
+  loop:
+    - ca.pem
+    - ca-key.pem
+  delegate_to: localhost
+  run_once: true
+  register: ca_check
+
+- name: "Create CA key and certificate"
+  block:
+    - template:
+        src: "ca-csr.json.j2"
+        dest: "certs/ca-csr.json"
+
+    - shell: >
+        cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+      args:
+        chdir: certs
+  delegate_to: localhost
+  run_once: true
+  when: false in (ca_check.results | map(attribute='stat.exists'))
+
+- name: "Check client keys"
+  stat:
+    path: "certs/{{ item.name }}-key.pem"
+  loop: "{{ ca_certs }}"
+  loop_control:
+    label: "{{ item.name }}-key.pem"
+  delegate_to: localhost
+  run_once: true
+  register: ca_client_key_check
+
+- name: "Check client certificates"
+  stat:
+    path: "certs/{{ item.name }}.pem"
+  loop: "{{ ca_certs }}"
+  loop_control:
+    label: "{{ item.name }}.pem"
+  delegate_to: localhost
+  run_once: true
+  register: ca_client_cert_check
+
+- name: "Configuration for client keys and certificates"
+  template:
+    src: "client-csr.json.j2"
+    dest: "certs/{{ item.item.name }}-csr.json"
+  loop: "{{ ca_client_cert_check.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.item.name }}-csr.json"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - not item.stat.exists
+    - not ca_client_key_check.results[idx].stat.exists
+
+- name: "Generate client keys and certificates"
+  shell: |
+    cfssl gencert \
+      -ca=ca.pem \
+      -ca-key=ca-key.pem \
+      -config=ca-config.json \
+      {% if item.item.san is defined %}
+      -hostname={{ item.item.san }} \
+      {% endif %}
+      -profile=kubernetes \
+      {{ item.item.name }}-csr.json | cfssljson -bare {{ item.item.name }}
+  args:
+    chdir: certs
+  loop: "{{ ca_client_cert_check.results }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.item.name }}.pem"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - not item.stat.exists
+    - not ca_client_key_check.results[idx].stat.exists
