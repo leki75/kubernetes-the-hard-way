@@ -1,4 +1,0 @@
-- hosts: worker
-  gather_facts: true
-  roles:
-    - worker

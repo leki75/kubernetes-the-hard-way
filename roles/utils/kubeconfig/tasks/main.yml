@@ -1,0 +1,5 @@
+- name: "Generate {{ kubeconfig_path | basename }}"
+  template:
+    src: kubeconfig.j2
+    dest: "{{ kubeconfig_path }}"
+  become: true

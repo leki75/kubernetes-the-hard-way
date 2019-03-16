@@ -1,22 +1,13 @@
-- name: "Create certs/ directory"
-  file:
-    path: certs
-    state: directory
-  delegate_to: localhost
-  run_once: true
-
-# TODO: download CA certificates from master nodes
-
 - name: "Create configuration for signing"
   template:
     src: "ca-config.json.j2"
-    dest: "certs/ca-config.json"
+    dest: "{{ workdir }}/ca-config.json"
   delegate_to: localhost
   run_once: true
 
 - name: "Check CA key and certificate"
   stat:
-    path: "certs/{{ item }}"
+    path: "{{ workdir }}/{{ item }}"
   loop:
     - ca.pem
     - ca-key.pem
@@ -28,19 +19,19 @@
   block:
     - template:
         src: "ca-csr.json.j2"
-        dest: "certs/ca-csr.json"
+        dest: "{{ workdir }}/ca-csr.json"
 
     - shell: >
         cfssl gencert -initca ca-csr.json | cfssljson -bare ca
       args:
-        chdir: certs
+        chdir: "{{ workdir }}"
   delegate_to: localhost
   run_once: true
   when: false in (ca_check.results | map(attribute='stat.exists'))
 
 - name: "Check client keys"
   stat:
-    path: "certs/{{ item.name }}-key.pem"
+    path: "{{ workdir }}/{{ item.name }}-key.pem"
   loop: "{{ ca_certs }}"
   loop_control:
     label: "{{ item.name }}-key.pem"
@@ -50,7 +41,7 @@
 
 - name: "Check client certificates"
   stat:
-    path: "certs/{{ item.name }}.pem"
+    path: "{{ workdir }}/{{ item.name }}.pem"
   loop: "{{ ca_certs }}"
   loop_control:
     label: "{{ item.name }}.pem"
@@ -58,10 +49,10 @@
   run_once: true
   register: ca_client_cert_check
 
-- name: "Configuration for client keys and certificates"
+- name: "Generate configuration for client keys and certificates"
   template:
     src: "client-csr.json.j2"
-    dest: "certs/{{ item.item.name }}-csr.json"
+    dest: "{{ workdir }}/{{ item.item.name }}-csr.json"
   loop: "{{ ca_client_cert_check.results }}"
   loop_control:
     index_var: idx
@@ -84,7 +75,7 @@
       -profile=kubernetes \
       {{ item.item.name }}-csr.json | cfssljson -bare {{ item.item.name }}
   args:
-    chdir: certs
+    chdir: "{{ workdir }}"
   loop: "{{ ca_client_cert_check.results }}"
   loop_control:
     index_var: idx

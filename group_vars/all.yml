@@ -1,2 +1,7 @@
-# Variables defined here override values defined in the config role in role
-# default directories
+kubernetes_version: v1.12.0
+
+workdir: workdir
+
+internal_ip: "{{ ansible_ens4.ipv4.address }}"
+external_ip: "{{ ansible_default_ipv4.address }}"
+public_ip: 1.2.3.4

@@ -1,14 +1,13 @@
 - name: "Generate worker certificate list"
   block:
   - set_fact:
-      # TODO: add internal address at the end of the SAN
       ca_certs: |
         - {name: "kube-proxy", cn: "system:kube-proxy", o: "system:node-proxier"}
         {% for host in play_hosts %}
         - name: "{{ hostvars[host].inventory_hostname }}"
           cn: "system:node:{{ hostvars[host].inventory_hostname }}"
           o: "system:nodes"
-          san: "{{ hostvars[host].inventory_hostname }},{{ hostvars[host].ansible_default_ipv4.address }}"
+          san: "{{ hostvars[host].inventory_hostname }},{{ hostvars[host].external_ip }},{{ hostvars[host].internal_ip }}"
         {% endfor %}
     loop: "{{ ansible_play_hosts }}"
   - set_fact:

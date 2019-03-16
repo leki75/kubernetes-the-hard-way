@@ -1,0 +1,13 @@
+master_files:
+  - ca.pem
+  - ca-key.pem
+  - kubernetes.pem
+  - kubernetes-key.pem
+  - service-account.pem
+  - service-account-key.pem
+  - encryption-config.yaml
+
+master_services:
+  - kube-apiserver
+  - kube-controller-manager
+  - kube-scheduler

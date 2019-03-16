@@ -1,11 +1,4 @@
 ---
-# etcd
-#- import_playbook: etcd.yml
-
-# master
-- import_playbook: kube-apiserver.yml
-- import_playbook: kube-controller-manager.yml
-- import_playbook: kube-scheduler.yml
-
-# worker
-- import_playbook: kubelet.yml
+- import_playbook: etcd.yml
+- import_playbook: kube-master.yml
+- import_playbook: kube-worker.yml

@@ -1,0 +1,25 @@
+- hosts: master
+  gather_facts: true
+
+  pre_tasks:
+    - name: "Create work directory"
+      file:
+        path: "{{ workdir }}"
+        state: directory
+      delegate_to: localhost
+      run_once: true
+
+    - name: "Create kubernetes directories"
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0700
+      loop:
+        - /etc/kubernetes/config
+        - /var/lib/kubernetes
+      become: true
+
+  roles:
+    - master

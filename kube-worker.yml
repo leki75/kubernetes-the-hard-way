@@ -1,0 +1,13 @@
+- hosts: worker
+  gather_facts: true
+
+  pre_tasks:
+    - name: "Create work directory"
+      file:
+        path: "{{ workdir }}"
+        state: directory
+      delegate_to: localhost
+      run_once: true
+
+  roles:
+    - worker
