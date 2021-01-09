@@ -3,7 +3,7 @@
 
   pre_tasks:
     - name: "Create work directory"
-      file:
+      ansible.builtin.file:
         path: "{{ workdir }}"
         state: directory
       delegate_to: localhost

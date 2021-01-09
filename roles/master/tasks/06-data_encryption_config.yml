@@ -1,0 +1,19 @@
+- name: "Check encryption config"
+  ansible.builtin.stat:
+    path: "{{ workdir }}/encryption-config.yaml"
+  delegate_to: localhost
+  run_once: true
+  register: master_encryption_check
+
+- name: "Generate encryption config"
+  block:
+    - ansible.builtin.command: >
+        head -c 32 /dev/urandom
+      register: master_encryption_key
+
+    - ansible.builtin.template:
+        src: encryption-config.yaml.j2
+        dest: "{{ workdir }}/encryption-config.yaml"
+  when: not master_encryption_check.stat.exists
+  delegate_to: localhost
+  run_once: true

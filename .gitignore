@@ -1,2 +1,9 @@
-/inventory/hosts
+# Do not store static inventory
+/inventory/hosts.ini
+/inventory/vagrant.py
+
+# Temporary directory
 /workdir/
+
+.vagrant/
+/.vscode/

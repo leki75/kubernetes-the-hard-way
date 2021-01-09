@@ -5,7 +5,6 @@ master_files:
   - kubernetes-key.pem
   - service-account.pem
   - service-account-key.pem
-  - encryption-config.yaml
 
 master_services:
   - kube-apiserver

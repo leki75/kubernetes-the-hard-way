@@ -1,0 +1,22 @@
+- name: "Generate kubeconfigs"
+  include_role:
+    name: utils/kubeconfig
+  vars:
+    kubeconfig_path: "/var/lib/kubernetes/{{ item.name }}.kubeconfig"
+    kubeconfig_server: "https://127.0.0.1:6443"
+    kubeconfig_user: "{{ item.user }}"
+    kubeconfig_user_cert: "{{ lookup('file', workdir + '/{{ item.name }}.pem') }}"
+    kubeconfig_user_key: "{{ lookup('file', workdir + '/{{ item.name }}-key.pem') }}"
+  loop:
+    - {name: admin, user: admin}
+    - {name: kube-controller-manager, user: "system:kube-controller-manager"}
+    - {name: kube-scheduler, user: "system:kube-scheduler"}
+
+- name: "Copy kube-scheduler.yaml"
+  copy:
+    src: kube-scheduler.yaml
+    dest: /etc/kubernetes/config/kube-scheduler.yaml
+    owner: root
+    group: root
+    mode: 0644
+  become: true

@@ -3,14 +3,14 @@
 
   pre_tasks:
     - name: "Create work directory"
-      file:
+      ansible.builtin.file:
         path: "{{ workdir }}"
         state: directory
       delegate_to: localhost
       run_once: true
 
     - name: "Create kubernetes directories"
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         owner: root

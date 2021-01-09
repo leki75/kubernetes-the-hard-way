@@ -1,12 +1,30 @@
-- name: "Create configuration for signing"
-  template:
-    src: "ca-config.json.j2"
-    dest: "{{ workdir }}/ca-config.json"
-  delegate_to: localhost
+- name: "Create tools directory"
+  ansible.builtin.file:
+    path: "{{ workdir }}/tools"
+    state: directory
   run_once: true
+  delegate_to: localhost
 
+- name: "Update facts on localhost"
+  ansible.builtin.setup:
+  run_once: true
+  delegate_to: localhost
+  delegate_facts: true
+
+- name: "Download binaries"
+  ansible.builtin.get_url:
+    url: "{{ cfssl_base_url }}/{{ item }}"
+    dest: "{{ workdir }}/tools/{{ item }}"
+    mode: 0755
+  loop:
+    - cfssl
+    - cfssljson
+  run_once: true
+  delegate_to: localhost
+
+# Check and generate CA certificate ca.pem and ca-key.pem files
 - name: "Check CA key and certificate"
-  stat:
+  ansible.builtin.stat:
     path: "{{ workdir }}/{{ item }}"
   loop:
     - ca.pem
@@ -15,22 +33,28 @@
   run_once: true
   register: ca_check
 
-- name: "Create CA key and certificate"
-  block:
-    - template:
-        src: "ca-csr.json.j2"
-        dest: "{{ workdir }}/ca-csr.json"
+- name: "Create configuration for signing"
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ workdir }}/{{ item }}"
+  loop:
+    - ca-config.json
+    - ca-csr.json
+  delegate_to: localhost
+  run_once: true
 
-    - shell: >
-        cfssl gencert -initca ca-csr.json | cfssljson -bare ca
-      args:
-        chdir: "{{ workdir }}"
+- name: "Create CA key and certificate"
+  ansible.builtin.shell: >
+    tools/cfssl gencert -initca ca-csr.json | tools/cfssljson -bare ca
+  args:
+    chdir: "{{ workdir }}"
   delegate_to: localhost
   run_once: true
   when: false in (ca_check.results | map(attribute='stat.exists'))
 
+# Check and generate additional certificates
 - name: "Check client keys"
-  stat:
+  ansible.builtin.stat:
     path: "{{ workdir }}/{{ item.name }}-key.pem"
   loop: "{{ ca_certs }}"
   loop_control:
@@ -40,7 +64,7 @@
   register: ca_client_key_check
 
 - name: "Check client certificates"
-  stat:
+  ansible.builtin.stat:
     path: "{{ workdir }}/{{ item.name }}.pem"
   loop: "{{ ca_certs }}"
   loop_control:
@@ -50,7 +74,7 @@
   register: ca_client_cert_check
 
 - name: "Generate configuration for client keys and certificates"
-  template:
+  ansible.builtin.template:
     src: "client-csr.json.j2"
     dest: "{{ workdir }}/{{ item.item.name }}-csr.json"
   loop: "{{ ca_client_cert_check.results }}"
@@ -64,8 +88,8 @@
     - not ca_client_key_check.results[idx].stat.exists
 
 - name: "Generate client keys and certificates"
-  shell: |
-    cfssl gencert \
+  ansible.builtin.shell: |
+    tools/cfssl gencert \
       -ca=ca.pem \
       -ca-key=ca-key.pem \
       -config=ca-config.json \
@@ -73,7 +97,7 @@
       -hostname={{ item.item.san }} \
       {% endif %}
       -profile=kubernetes \
-      {{ item.item.name }}-csr.json | cfssljson -bare {{ item.item.name }}
+      {{ item.item.name }}-csr.json | tools/cfssljson -bare {{ item.item.name }}
   args:
     chdir: "{{ workdir }}"
   loop: "{{ ca_client_cert_check.results }}"

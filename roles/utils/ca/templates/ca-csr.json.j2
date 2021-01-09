@@ -1,16 +1,16 @@
 {
-    "CN": "{{ ca_cn }}",
-    "key": {
-      "algo": "rsa",
-      "size": {{ ca_rsa_keysize }}
-    },
-    "names": [
-      {
-        "C": "{{ ca_country }}",
-        "L": "{{ ca_locality }}",
-        "O": "{{ ca_organization }}",
-        "OU": "{{ ca_organizational_unit }}",
-        "ST": "{{ ca_state }}"
-      }
-    ]
-  }
+  "CN": "{{ ca_cn }}",
+  "key": {
+    "algo": "rsa",
+    "size": {{ ca_rsa_keysize }}
+  },
+  "names": [
+    {
+      "C": "{{ ca_country }}",
+      "L": "{{ ca_locality }}",
+      "O": "{{ ca_organization }}",
+      "OU": "{{ ca_organizational_unit }}",
+      "ST": "{{ ca_state }}"
+    }
+  ]
+}

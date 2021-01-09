@@ -1,0 +1,33 @@
+- name: "Download binaries"
+  get_url:
+    url: "{{ master_base_url }}/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - kube-apiserver
+    - kube-controller-manager
+    - kube-scheduler
+    - kubectl
+  become: true
+
+- name: "Create master services"
+  template:
+    src: "{{ item }}.service.j2"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    owner: root
+    group: root
+    mode: 0644
+  loop: "{{ master_services }}"
+  become: true
+  notify:
+    - Reload systemd
+
+- name: "Enable master services"
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: "{{ master_services }}"
+  become: true

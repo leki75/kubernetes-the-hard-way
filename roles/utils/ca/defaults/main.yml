@@ -1,3 +1,5 @@
+cfssl_base_url: https://storage.googleapis.com/kubernetes-the-hard-way/cfssl/{{ hostvars['localhost']['ansible_system'] | lower }}
+
 ca_rsa_keysize: 2048
 ca_ca_expiry: "8760h"
 ca_cert_expiry: "8760h"

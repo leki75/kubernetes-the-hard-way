@@ -1,0 +1,20 @@
+- name: "Generate master certificates"
+  import_role:
+    name: utils/ca
+  vars:
+    ca_certs:
+      - {name: "admin", cn: "admin", o: "system:masters"}
+      - {name: "kube-controller-manager", cn: "system:kube-controller-manager", o: "system:kube-controller-manager"}
+      - {name: "kube-scheduler", cn: "system:kube-scheduler", o: "system:kube-scheduler"}
+      - {name: "kubernetes", cn: "kubernetes", san: "127.0.0.1,10.32.0.1,{{ groups['master'] | map('extract', hostvars, 'internal_ip') | join(',') }},{{ public_ip }},kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local"}
+      - {name: "service-account", cn: "service-accounts"}
+
+- name: "Copy keys and certificates"
+  copy:
+    dest: "/var/lib/kubernetes/{{ item }}"
+    src: "{{ workdir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: 0600
+  loop: "{{ master_files }}"
+  become: true
